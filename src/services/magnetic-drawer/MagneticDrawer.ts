@@ -1,4 +1,6 @@
 import { fabric } from 'fabric';
+import Core from '../../domain/Core';
+import CoilFormer from '../../domain/CoilFormer';
 
 export default class MagneticDrawer {
   cores: fabric.Rect[];
@@ -14,10 +16,12 @@ export default class MagneticDrawer {
     this.gaps = [];
     this.wirings = [];
 
-    canvas.setDimensions({
+    this.canvas.setDimensions({
       width: 200,
       height: 300,
     });
+
+    this.clearCanvas();
   }
 
   canvasHeight() {
@@ -28,28 +32,31 @@ export default class MagneticDrawer {
     return this.cores[1].width ?? 0;
   }
 
-  drawCore(thicknes: number) {
+  drawCore(core: Core) {
     for (let rect = 0; rect < 3; rect++) {
-      let width = rect % 2 === 0 ? this.canvas.width : thicknes;
-      let height = rect % 2 === 0 ? thicknes : this.canvasHeight();
+      let width = rect % 2 === 0 ? this.canvas.width : core.getThickness();
+      let height = rect % 2 === 0 ? core.getThickness() : this.canvasHeight();
+      let positionY = rect === 2 ? this.canvasHeight() - height : 0;
+      console.log(height, positionY);
 
-      let core = new fabric.Rect({
+      let coreRect = new fabric.Rect({
         width: width,
         height: height,
         fill: 'gray',
         selectable: false,
-        stroke: 'gray',
         left: 0,
-        top: rect === 2 ? this.canvasHeight() - height : 0,
+        strokeWidth: 0,
+        top: positionY,
       });
 
-      this.cores.push(core);
+      this.cores.push(coreRect);
     }
 
     const coreGroup = new fabric.Group(this.cores, {
       left: 1,
       top: 0,
       hasControls: false,
+      strokeWidth: 0,
       selectable: false,
     });
 
@@ -61,22 +68,23 @@ export default class MagneticDrawer {
       width: this.coreWidth(),
       height: 10,
       fill: 'white',
-      stroke: 'white',
       selectable: false,
+      strokeWidth: 0,
     });
 
     gap.set({
       left: 1,
       top: this.canvasHeight() / 2,
+      strokeWidth: 0,
     });
 
     this.addToCanvas(gap);
   }
 
-  drawBobbin(bobbin: Bobbin) {
+  drawBobbin(bobbin: CoilFormer) {
     for (let rect = 0; rect < 3; rect++) {
-      let width = rect % 2 === 0 ? this.canvas.width : bobbin.thicknes;
-      let height = rect % 2 === 0 ? bobbin.thicknes : this.canvasHeight();
+      let width = rect % 2 === 0 ? this.canvas.width : bobbin.thickness;
+      let height = rect % 2 === 0 ? bobbin.thickness : this.canvasHeight();
 
       let core = new fabric.Rect({
         width: width,
@@ -124,5 +132,9 @@ export default class MagneticDrawer {
   addToCanvas(element: any) {
     this.canvas.add(element);
     this.canvas.renderAll();
+  }
+
+  clearCanvas() {
+    this.canvas.clear().renderAll();
   }
 }
