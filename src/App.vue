@@ -5,14 +5,21 @@ import { fabric } from 'fabric';
 import Input from './components/Input.vue';
 import Core from './domain/Core';
 import CoilFormer from './domain/CoilFormer';
+import Gap from './domain/Gap';
 
 interface State {
   core: Core;
   coilFormer: CoilFormer;
+  gaps: Gap[];
+  gapLength: number;
+  numberGaps: number;
 }
 const state = ref<State>({
   core: new Core(),
   coilFormer: new CoilFormer(),
+  gaps: [],
+  gapLength: 10,
+  numberGaps: 1,
 });
 let magneticDrawer: MagneticDrawer;
 let canvas: fabric.Canvas;
@@ -29,6 +36,17 @@ onMounted(() => {
   canvas = new fabric.Canvas('draw');
   drawMagnetic();
 });
+
+const changeNumberGaps = () => {
+  for (let index = 0; index < state.value.numberGaps; index++) {
+    state.value.gaps.push({
+      gap_length: state.value.gapLength,
+      fringing_factor: 0
+    });
+  }
+
+  drawMagnetic()
+};
 </script>
 
 <template>
@@ -45,6 +63,15 @@ onMounted(() => {
           <Input type="number" label="Thickness" v-model="state.core.thickness" @change="drawMagnetic" />
           <Input type="number" label="Width" v-model="state.core.width" @change="drawMagnetic" />
           <Input type="number" label="Height" v-model="state.core.height" @change="drawMagnetic" />
+        </div>
+      </div>
+
+      <div class="grid place-content-center">
+        <h3 class="text-center font-bold">GAP</h3>
+
+        <div class="mt-5 flex flex-wrap gap-5">
+          <Input type="number" label="Number Gaps" v-model="state.numberGaps" @change="changeNumberGaps" />
+          <Input type="number" label="Gap Length" v-model="state.gapLength" @change="changeNumberGaps" />
         </div>
       </div>
 

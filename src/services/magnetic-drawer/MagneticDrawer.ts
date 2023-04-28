@@ -1,11 +1,12 @@
 import { fabric } from 'fabric';
 import Core from '../../domain/Core';
 import CoilFormer from '../../domain/CoilFormer';
+import Gap from '../../domain/Gap';
 
 export default class MagneticDrawer {
   cores: fabric.Rect[];
   bobbins: fabric.Rect[];
-  gaps: fabric.Rect[];
+  gaps: Gap[];
   wirings: fabric.Group[];
   canvas: fabric.Canvas;
   core: Core;
