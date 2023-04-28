@@ -1,7 +1,17 @@
-export default class CoilFormer {
-  thickness: number = 0;
+import Core from "./Core";
 
-  distance_to_core: number = 0;
+export default class CoilFormer {
+  thickness: number = 5;
+
+  floor_thickness: number = 5;
+
+  wall_thickness: number = 5;
+
+  distance_to_core: number = 10;
+
+  distance_to_core_floor: number = 10;
+
+  distance_to_core_wall: number = 10;
 
   length: number = 0;
 

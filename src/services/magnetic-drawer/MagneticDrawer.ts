@@ -8,9 +8,13 @@ export default class MagneticDrawer {
   gaps: fabric.Rect[];
   wirings: fabric.Group[];
   canvas: fabric.Canvas;
+  core: Core;
+  bobbin: CoilFormer;
 
-  constructor(canvas: fabric.Canvas) {
+  constructor(canvas: fabric.Canvas, core: Core, bobbin: CoilFormer) {
     this.canvas = canvas;
+    this.core = core;
+    this.bobbin = bobbin;
     this.cores = [];
     this.bobbins = [];
     this.gaps = [];
@@ -32,20 +36,24 @@ export default class MagneticDrawer {
     return this.cores[1].width ?? 0;
   }
 
-  drawCore(core: Core) {
+  drawCore() {
+    this.canvas.setDimensions({
+      width: this.core.width,
+      height: this.core.height,
+    });
+
     for (let rect = 0; rect < 3; rect++) {
-      let width = rect % 2 === 0 ? this.canvas.width : core.getThickness();
-      let height = rect % 2 === 0 ? core.getThickness() : this.canvasHeight();
+      let width = rect % 2 === 0 ? this.canvas.width : this.core.getThickness();
+      let height = rect % 2 === 0 ? this.core.getThickness() : this.canvasHeight();
       let positionY = rect === 2 ? this.canvasHeight() - height : 0;
-      console.log(height, positionY);
 
       let coreRect = new fabric.Rect({
         width: width,
         height: height,
         fill: 'gray',
+        stroke: 'gray',
         selectable: false,
         left: 0,
-        strokeWidth: 0,
         top: positionY,
       });
 
@@ -65,45 +73,52 @@ export default class MagneticDrawer {
 
   drawGap() {
     let gap = new fabric.Rect({
-      width: this.coreWidth(),
+      width: this.core.thickness + 2,
       height: 10,
       fill: 'white',
+      stroke: 'white',
+      strokeWidth: 1,
       selectable: false,
-      strokeWidth: 0,
     });
 
     gap.set({
-      left: 1,
+      left: 0,
       top: this.canvasHeight() / 2,
-      strokeWidth: 0,
     });
 
     this.addToCanvas(gap);
   }
 
-  drawBobbin(bobbin: CoilFormer) {
-    for (let rect = 0; rect < 3; rect++) {
-      let width = rect % 2 === 0 ? this.canvas.width : bobbin.thickness;
-      let height = rect % 2 === 0 ? bobbin.thickness : this.canvasHeight();
+  drawBobbin() {
+    const availableWidth = this.core.width - this.bobbin.distance_to_core_floor;
+    const availableHeight = this.core.height - this.core.thickness * 2 - this.bobbin.distance_to_core_wall * 2 - this.bobbin.wall_thickness;
 
-      let core = new fabric.Rect({
+    for (let rect = 0; rect < 3; rect++) {
+      let width = rect % 2 === 0 ? availableWidth : this.bobbin.floor_thickness;
+      let height = rect % 2 === 0 ? this.bobbin.wall_thickness : availableHeight;
+
+      let positionX = 0;
+      let positionY = rect === 2 ? availableHeight : 0;
+
+      let bobbinRect = new fabric.Rect({
         width: width,
         height: height,
-        fill: 'blue',
+        fill: '#00235a',
+        stroke: '#00235a',
         selectable: false,
-        stroke: 'blue',
-        left: 0,
-        top: rect === 2 ? this.canvasHeight() - height : 0,
+        left: positionX,
+        top: positionY,
       });
 
-      this.bobbins.push(core);
+      this.bobbins.push(bobbinRect);
     }
 
-    let positionX = this.coreWidth() + bobbin.distanceToCore;
-    let positionY = this.coreWidth() + bobbin.distanceToCore;
+    let positionX = this.core.thickness + this.bobbin.distance_to_core_floor;
+    let positionY = this.core.thickness + this.bobbin.distance_to_core_wall;
     const bobbinGroup = new fabric.Group(this.bobbins, {
       left: positionX,
       top: positionY,
+      strokeWidth: 0,
       hasControls: false,
       selectable: false,
     });

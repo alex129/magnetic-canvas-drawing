@@ -1,9 +1,10 @@
 export default class Core {
-  thickness = 0;
+  thickness = 10;
 
-  height = 0;
+  width = 200;
 
-  width = 0;
+  height = 300;
+
 
   getThickness() {
     return this.thickness > 0 ? this.thickness : 0;
