@@ -11,7 +11,7 @@ export default class Wiring {
     dot_position: string = ''
     is_auxiliary: boolean = false
     number_turns: number = 10
-    total_height: number = 10
+    total_height: number = 20
     total_width: number = 10
     number_layers: number = 1
     isolation_side: string = ''

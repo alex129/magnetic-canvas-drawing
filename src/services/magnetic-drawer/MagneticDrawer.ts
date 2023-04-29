@@ -149,23 +149,44 @@ export default class MagneticDrawer {
 
   drawWiring() {
     this.wirings.forEach((wiring) => {
-      const drawings = [];
-      for (let i = 0; i < wiring.number_turns; i++) {
-        const wiringRadius = wiring.total_height / 2;
-        const circle = new fabric.Circle({
-          radius: wiringRadius,
-          fill: '#33E7FF',
-          top: wiring.total_height * i,
-          left: 0,
-        });
-        drawings.push(circle);
+      const wiringLayersGroups: fabric.Object[] = [];
+      const remainingWirings = wiring.number_turns % wiring.number_layers;
+      const totalWiringPerLayer = Math.floor(wiring.number_turns / wiring.number_layers);
+      const wiringHeight = wiring.total_height * (totalWiringPerLayer + remainingWirings);
+      console.log('REMAINING WIRINGS', remainingWirings, totalWiringPerLayer, wiring.number_turns / wiring.number_layers);
+      const wiringRadius = wiring.total_height / 2;
+      const wiringLayers: fabric.Object[][] = [];
+      for (let layer = 0; layer < wiring.number_layers; layer++) {
+        wiringLayers[layer] = [];
+        const numberTurnsInLayer = layer === 0 ? totalWiringPerLayer + remainingWirings : totalWiringPerLayer;
+        for (let turn = 0; turn < numberTurnsInLayer; turn++) {
+          const circle = new fabric.Circle({
+            radius: wiringRadius,
+            fill: '#33E7FF',
+            top: wiring.total_height * turn,
+            left: 0,
+          });
+          wiringLayers[layer].push(circle);
+          // wiringLayersGroups.push(circle);
+        }
       }
 
-      const wiringHeight = wiring.total_height * wiring.number_turns;
+      for (let layer = 0; layer < wiringLayers.length; layer++) {
+        const layerWiringHeight = wiring.total_height * wiringLayers[layer].length
+        const centerY = wiringHeight / 2 - layerWiringHeight / 2;
+        console.log('CENTER WIRING GROUP', centerY);
+        wiringLayersGroups.push(
+          new fabric.Group(wiringLayers[layer], {
+            left: wiring.total_height * layer,
+            top: wiringLayers[layer].length === totalWiringPerLayer ? centerY : 0,
+          })
+        );
+      }
+
       const centerY = this.core.height / 2 - wiringHeight / 2;
       const distanceXToWhiteSpace = this.core.thickness + this.bobbin.distance_to_core_floor + this.bobbin.floor_thickness;
       this.wiringsGroup.push(
-        new fabric.Group(drawings, {
+        new fabric.Group(wiringLayersGroups, {
           left: distanceXToWhiteSpace,
           top: centerY,
           hasControls: false,
