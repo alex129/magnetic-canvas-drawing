@@ -26,27 +26,29 @@ let canvas: fabric.Canvas;
 
 const drawMagnetic = () => {
   console.log(state.value.core);
-  magneticDrawer = new MagneticDrawer(canvas, state.value.core, state.value.coilFormer);
+  magneticDrawer = new MagneticDrawer(canvas, state.value.core, state.value.coilFormer, state.value.gaps);
   magneticDrawer.drawCore();
   magneticDrawer.drawGap();
   magneticDrawer.drawBobbin();
 };
 
-onMounted(() => {
-  canvas = new fabric.Canvas('draw');
-  drawMagnetic();
-});
-
-const changeNumberGaps = () => {
+const refreshNumberGaps = () => {
+  state.value.gaps = [];
   for (let index = 0; index < state.value.numberGaps; index++) {
     state.value.gaps.push({
       gap_length: state.value.gapLength,
-      fringing_factor: 0
+      fringing_factor: 0,
     });
   }
 
-  drawMagnetic()
+  drawMagnetic();
 };
+
+onMounted(() => {
+  canvas = new fabric.Canvas('draw');
+  refreshNumberGaps()
+  drawMagnetic();
+});
 </script>
 
 <template>
@@ -70,8 +72,8 @@ const changeNumberGaps = () => {
         <h3 class="text-center font-bold">GAP</h3>
 
         <div class="mt-5 flex flex-wrap gap-5">
-          <Input type="number" label="Number Gaps" v-model="state.numberGaps" @change="changeNumberGaps" />
-          <Input type="number" label="Gap Length" v-model="state.gapLength" @change="changeNumberGaps" />
+          <Input type="number" label="Number Gaps" v-model="state.numberGaps" @change="refreshNumberGaps" />
+          <Input type="number" label="Gap Length" v-model="state.gapLength" @change="refreshNumberGaps" />
         </div>
       </div>
 

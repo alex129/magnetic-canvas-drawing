@@ -12,13 +12,13 @@ export default class MagneticDrawer {
   core: Core;
   bobbin: CoilFormer;
 
-  constructor(canvas: fabric.Canvas, core: Core, bobbin: CoilFormer) {
+  constructor(canvas: fabric.Canvas, core: Core, bobbin: CoilFormer, gaps: Gap[]) {
     this.canvas = canvas;
     this.core = core;
     this.bobbin = bobbin;
+    this.gaps = gaps;
     this.cores = [];
     this.bobbins = [];
-    this.gaps = [];
     this.wirings = [];
 
     this.canvas.setDimensions({
@@ -73,21 +73,35 @@ export default class MagneticDrawer {
   }
 
   drawGap() {
-    let gap = new fabric.Rect({
-      width: this.core.thickness + 2,
-      height: 10,
-      fill: 'white',
-      stroke: 'white',
-      strokeWidth: 1,
+    const numberGaps = this.gaps.length;
+    const gapRects: fabric.Rect[] = [];
+    this.gaps.forEach((gap, index) => {
+      const positionAvailableByNumberGaps = (this.core.height / numberGaps * (index+1))
+      const positionY = this.core.height / 2 + positionAvailableByNumberGaps
+      let gapRect = new fabric.Rect({
+        top: positionY,
+        left: 1,
+        width: this.core.thickness + 2,
+        height: gap.gap_length,
+        fill: 'white',
+        stroke: 'white',
+        strokeWidth: 1,
+        selectable: false,
+      });
+
+      gapRects.push(gapRect);
+    });
+
+    const gapGroup = new fabric.Group(gapRects, {
+      left: 0,
+      top: 0,
+      height: this.core.height,
+      hasControls: false,
+      strokeWidth: 0,
       selectable: false,
     });
 
-    gap.set({
-      left: 0,
-      top: this.canvasHeight() / 2,
-    });
-
-    this.addToCanvas(gap);
+    this.addToCanvas(gapGroup);
   }
 
   drawBobbin() {
