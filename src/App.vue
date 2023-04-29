@@ -6,6 +6,7 @@ import Input from './components/Input.vue';
 import Core from './domain/Core';
 import CoilFormer from './domain/CoilFormer';
 import Gap from './domain/Gap';
+import Wiring from './domain/Wiring';
 
 interface State {
   core: Core;
@@ -13,11 +14,13 @@ interface State {
   gaps: Gap[];
   gapLength: number;
   numberGaps: number;
+  wirings: Wiring[];
 }
 const state = ref<State>({
   core: new Core(),
   coilFormer: new CoilFormer(),
   gaps: [],
+  wirings: [new Wiring()],
   gapLength: 10,
   numberGaps: 1,
 });
@@ -26,10 +29,11 @@ let canvas: fabric.Canvas;
 
 const drawMagnetic = () => {
   console.log(state.value.core);
-  magneticDrawer = new MagneticDrawer(canvas, state.value.core, state.value.coilFormer, state.value.gaps);
+  magneticDrawer = new MagneticDrawer(canvas, state.value.core, state.value.coilFormer, state.value.gaps, state.value.wirings);
   magneticDrawer.drawCore();
   magneticDrawer.drawGap();
   magneticDrawer.drawBobbin();
+  magneticDrawer.drawWiring();
 };
 
 const refreshNumberGaps = () => {
@@ -46,7 +50,7 @@ const refreshNumberGaps = () => {
 
 onMounted(() => {
   canvas = new fabric.Canvas('draw');
-  refreshNumberGaps()
+  refreshNumberGaps();
   drawMagnetic();
 });
 </script>
@@ -85,6 +89,22 @@ onMounted(() => {
           <Input type="number" label="Floor Thickness" v-model="state.coilFormer.floor_thickness" @change="drawMagnetic" />
           <Input type="number" label="Distance to Core Floor" v-model="state.coilFormer.distance_to_core_floor" @change="drawMagnetic" />
           <Input type="number" label="Distance to Core Wall" v-model="state.coilFormer.distance_to_core_wall" @change="drawMagnetic" />
+        </div>
+      </div>
+
+      <div class="grid place-content-center">
+        <h3 class="text-center font-bold">WIRING</h3>
+
+        <div class="grid place-content-center">
+          <h3 class="text-center text-blue-600 mt-5">PRIMARY</h3>
+
+          <div class="mt-5 flex flex-wrap gap-5" v-for="(wiring, index) in state.wirings" :key="index">
+            <Input type="number" label="Number Turns" v-model="wiring.number_turns" @change="drawMagnetic" />
+            <Input type="number" label="Number Layers" v-model="wiring.number_layers" @change="drawMagnetic" />
+            <Input type="number" label="Number Parallels" v-model="wiring.number_parallels" @change="drawMagnetic" />
+            <Input type="number" label="Width" v-model="wiring.total_width" @change="drawMagnetic" />
+            <Input type="number" label="Height" v-model="wiring.total_height" @change="drawMagnetic" />
+          </div>
         </div>
       </div>
     </div>

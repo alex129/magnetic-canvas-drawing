@@ -2,24 +2,27 @@ import { fabric } from 'fabric';
 import Core from '../../domain/Core';
 import CoilFormer from '../../domain/CoilFormer';
 import Gap from '../../domain/Gap';
+import Wiring from '../../domain/Wiring';
 
 export default class MagneticDrawer {
   cores: fabric.Rect[];
   bobbins: fabric.Rect[];
   gaps: Gap[];
-  wirings: fabric.Group[];
+  wirings: Wiring[];
+  wiringsGroup: fabric.Group[];
   canvas: fabric.Canvas;
   core: Core;
   bobbin: CoilFormer;
 
-  constructor(canvas: fabric.Canvas, core: Core, bobbin: CoilFormer, gaps: Gap[]) {
+  constructor(canvas: fabric.Canvas, core: Core, bobbin: CoilFormer, gaps: Gap[], wirings: Wiring[]) {
     this.canvas = canvas;
     this.core = core;
     this.bobbin = bobbin;
     this.gaps = gaps;
+    this.wirings = wirings;
     this.cores = [];
     this.bobbins = [];
-    this.wirings = [];
+    this.wiringsGroup = [];
 
     this.canvas.setDimensions({
       width: 200,
@@ -56,6 +59,7 @@ export default class MagneticDrawer {
         selectable: false,
         left: 0,
         top: positionY,
+        strokeWidth: 0,
       });
 
       this.cores.push(coreRect);
@@ -76,8 +80,8 @@ export default class MagneticDrawer {
     const numberGaps = this.gaps.length;
     const gapRects: fabric.Rect[] = [];
     this.gaps.forEach((gap, index) => {
-      const positionAvailableByNumberGaps = (this.core.height / numberGaps * (index+1))
-      const positionY = this.core.height / 2 + positionAvailableByNumberGaps
+      const positionAvailableByNumberGaps = (this.core.height / numberGaps) * (index + 1);
+      const positionY = this.core.height / 2 + positionAvailableByNumberGaps;
       let gapRect = new fabric.Rect({
         top: positionY,
         left: 1,
@@ -123,6 +127,7 @@ export default class MagneticDrawer {
         selectable: false,
         left: positionX,
         top: positionY,
+        strokeWidth: 0,
       });
 
       this.bobbins.push(bobbinRect);
@@ -136,31 +141,48 @@ export default class MagneticDrawer {
       strokeWidth: 0,
       hasControls: false,
       selectable: false,
+      hasBorders: false,
     });
 
     this.addToCanvas(bobbinGroup);
   }
 
   drawWiring() {
-    const numberWiring = this.canvasHeight() / 20;
-    const wiring1 = [];
-    for (let i = 0; i < numberWiring; i++) {
-      const circle = new fabric.Circle({
-        radius: 10,
-        fill: 'red',
-        top: 20 * i,
-      });
-      wiring1.push(circle);
-    }
-    var wirings1 = new fabric.Group(wiring1, {
-      left: 50,
-      top: 10,
-      hasControls: false,
+    this.wirings.forEach((wiring) => {
+      const drawings = [];
+      for (let i = 0; i < wiring.number_turns; i++) {
+        const wiringRadius = wiring.total_height / 2;
+        const circle = new fabric.Circle({
+          radius: wiringRadius,
+          fill: '#33E7FF',
+          top: wiring.total_height * i,
+          left: 0,
+        });
+        drawings.push(circle);
+      }
+
+      const wiringHeight = wiring.total_height * wiring.number_turns;
+      const centerY = this.core.height / 2 - wiringHeight / 2;
+      const distanceXToWhiteSpace = this.core.thickness + this.bobbin.distance_to_core_floor + this.bobbin.floor_thickness;
+      this.wiringsGroup.push(
+        new fabric.Group(drawings, {
+          left: distanceXToWhiteSpace,
+          top: centerY,
+          hasControls: false,
+        })
+      );
+    });
+
+    this.wiringsGroup.forEach((group) => {
+      this.addToCanvas(group);
     });
   }
 
-  addToCanvas(element: any) {
+  addToCanvas(element: fabric.Object) {
     this.canvas.add(element);
+    this.canvas.getObjects().forEach((obj) => {
+      obj.set('strokeWidth', 0);
+    });
     this.canvas.renderAll();
   }
 
