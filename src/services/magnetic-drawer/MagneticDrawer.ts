@@ -3,13 +3,14 @@ import Core from '../../domain/Core';
 import CoilFormer from '../../domain/CoilFormer';
 import Gap from '../../domain/Gap';
 import Wiring from '../../domain/Wiring';
+import WiringOptions from '../../enum/Wirings';
 
 export default class MagneticDrawer {
   rectanglesOfCore: fabric.Rect[];
   rectanglesOfBobbin: fabric.Rect[];
   gaps: Gap[];
   wirings: Wiring[];
-  wiringsGroup: fabric.Group[];
+  wiringsGroup: fabric.Object[];
   canvas: fabric.Canvas;
   core: Core;
   bobbin: CoilFormer;
@@ -25,6 +26,8 @@ export default class MagneticDrawer {
     this.wiringsGroup = [];
 
     this.clearCanvas();
+
+    this.canvas.on('object:modified', (e) => this.objectModifiedHandler(e));
   }
 
   drawCore() {
@@ -168,14 +171,14 @@ export default class MagneticDrawer {
       let totalTurns = 0;
       for (let layer = 0; layer < wiring.number_layers; layer++) {
         wiringLayers[layer] = [];
-        const remainingTurn = (totalRemainingTurns > 0 ? 1 : 0);
+        const remainingTurn = totalRemainingTurns > 0 ? 1 : 0;
         const turnsPerLayer = totalTurnsPerLayer + remainingTurn;
         totalRemainingTurns = totalRemainingTurns - remainingTurn;
         for (let turn = 0; turn < turnsPerLayer && totalTurns < wiring.number_turns; turn++) {
           totalTurns++;
           const circle = new fabric.Circle({
             radius: wiringRadius,
-            fill: '#33E7FF',
+            fill: WiringOptions[wiringIndex].color,
             top: wiring.total_height * turn,
             left: 0,
           });
@@ -188,13 +191,13 @@ export default class MagneticDrawer {
 
       const centerY = this.core.height / 2 - totalWiringsHeight / 2;
       const distanceXToWhiteSpace = this.distanceXToNextWiringSpace(wiringIndex);
-      this.wiringsGroup.push(
-        new fabric.Group(wiringLayersGroup, {
-          left: distanceXToWhiteSpace,
-          top: centerY,
-          hasControls: false,
-        })
-      );
+      const wiringGroup = new fabric.Group(wiringLayersGroup, {
+        left: distanceXToWhiteSpace,
+        top: centerY,
+        hasControls: false,
+      });
+
+      this.wiringsGroup.push(wiringGroup);
     });
 
     this.wiringsGroup.forEach((group) => {
@@ -202,7 +205,7 @@ export default class MagneticDrawer {
     });
   }
 
-  addToCanvas(element: fabric.Object) {
+  private addToCanvas(element: fabric.Object) {
     this.canvas.add(element);
     this.canvas.getObjects().forEach((obj) => {
       obj.set('strokeWidth', 0);
@@ -210,7 +213,42 @@ export default class MagneticDrawer {
     this.canvas.renderAll();
   }
 
-  clearCanvas() {
+  private clearCanvas() {
     this.canvas.clear().renderAll();
+  }
+
+  private clearWirings() {
+    this.wiringsGroup.forEach((wiringGroup) => {
+      this.canvas.remove(wiringGroup);
+    });
+    this.wiringsGroup = [];
+    this.canvas.renderAll();
+    this.drawWiring()
+  }
+
+  private objectModifiedHandler(e: fabric.IEvent) {
+    const modifiedObject = e.target as fabric.Object;
+    if (modifiedObject) {
+      let containerObject: fabric.Object | null = null;
+      this.wiringsGroup
+        .filter((wiringGroup) => wiringGroup !== modifiedObject)
+        .forEach((wiringGroup) => {
+          if (wiringGroup.containsPoint(modifiedObject.getCenterPoint())) {
+            // const containerIndex = this.canvas.getObjects().indexOf(containerObject);
+            // const movingIndex = this.canvas.getObjects().indexOf(movingObject);
+            // this.canvas.moveTo(movingObject, containerIndex);
+            // this.canvas.moveTo(containerObject, movingIndex);
+            console.log('Contains point');
+            modifiedObject.set({
+              top: wiringGroup.top,
+              left: wiringGroup.left,
+            });
+          }
+        });
+
+      if (!containerObject) {
+        //this.clearWirings();
+      }
+    }
   }
 }

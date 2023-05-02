@@ -7,6 +7,7 @@ import Core from './domain/Core';
 import CoilFormer from './domain/CoilFormer';
 import Gap from './domain/Gap';
 import Wiring from './domain/Wiring';
+import WiringOptions from './enum/Wirings';
 
 interface State {
   core: Core;
@@ -20,7 +21,7 @@ const state = ref<State>({
   core: new Core(),
   coilFormer: new CoilFormer(),
   gaps: [],
-  wirings: [new Wiring()],
+  wirings: [new Wiring(), new Wiring()],
   gapLength: 10,
   numberGaps: 1,
 });
@@ -95,10 +96,10 @@ onMounted(() => {
       <div class="grid place-content-center">
         <h3 class="text-center font-bold">WIRING</h3>
 
-        <div class="grid place-content-center">
-          <h3 class="text-center text-blue-600 mt-5">PRIMARY</h3>
+        <div class="grid place-content-center" v-for="(wiring, index) in state.wirings" :key="index">
+          <h3 class="text-center mt-5" :class="[`text-${WiringOptions[index].color_code}`]">{{ WiringOptions[index].title }}</h3>
 
-          <div class="mt-5 flex flex-wrap gap-5" v-for="(wiring, index) in state.wirings" :key="index">
+          <div class="mt-5 flex flex-wrap gap-5">
             <Input type="number" label="Number Turns" v-model="wiring.number_turns" @change="drawMagnetic" />
             <Input type="number" label="Number Layers" v-model="wiring.number_layers" @change="drawMagnetic" />
             <Input type="number" label="Number Parallels" v-model="wiring.number_parallels" @change="drawMagnetic" />
