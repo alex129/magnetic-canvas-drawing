@@ -14,6 +14,7 @@ export default class MagneticDrawer {
   canvas: fabric.Canvas;
   core: Core;
   bobbin: CoilFormer;
+  wiringGroupPreviousCoordinates: any;
 
   constructor(canvas: fabric.Canvas, core: Core, bobbin: CoilFormer, gaps: Gap[], wirings: Wiring[]) {
     this.canvas = canvas;
@@ -28,6 +29,7 @@ export default class MagneticDrawer {
     this.clearCanvas();
 
     this.canvas.on('object:modified', (e) => this.objectModifiedHandler(e));
+    this.canvas.on('object:moving', (e) => this.objectMovingHandler(e));
   }
 
   drawCore() {
@@ -223,11 +225,12 @@ export default class MagneticDrawer {
     });
     this.wiringsGroup = [];
     this.canvas.renderAll();
-    this.drawWiring()
+    this.drawWiring();
   }
 
   private objectModifiedHandler(e: fabric.IEvent) {
     const modifiedObject = e.target as fabric.Object;
+    console.log(e.target);
     if (modifiedObject) {
       let containerObject: fabric.Object | null = null;
       this.wiringsGroup
@@ -248,7 +251,16 @@ export default class MagneticDrawer {
 
       if (!containerObject) {
         //this.clearWirings();
+        modifiedObject.set(this.wiringGroupPreviousCoordinates);
+        modifiedObject.saveState()
       }
+    }
+  }
+
+  private objectMovingHandler(e: fabric.IEvent) {
+    const movingObject = e.target as fabric.Object & { isMoving: boolean };
+    if (movingObject && !movingObject.isMoving) {
+      this.wiringGroupPreviousCoordinates = { top: movingObject.top, left: movingObject.left };
     }
   }
 }
