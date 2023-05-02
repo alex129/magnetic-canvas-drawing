@@ -133,19 +133,45 @@ export default class MagneticDrawer {
     this.addToCanvas(bobbinGroup);
   }
 
+  private centeredWiringGroup(wiringLayers: fabric.Object[][], wiringHeight: number, totalWiringsHeight: number): fabric.Group[] {
+    const wiringLayersGroups: fabric.Group[] = [];
+    for (let layer = 0; layer < wiringLayers.length; layer++) {
+      const layerWiringHeight = wiringHeight * wiringLayers[layer].length;
+      const centerY = totalWiringsHeight / 2 - layerWiringHeight / 2;
+      wiringLayersGroups.push(
+        new fabric.Group(wiringLayers[layer], {
+          left: wiringHeight * layer,
+          top: centerY,
+        })
+      );
+    }
+
+    return wiringLayersGroups;
+  }
+
+  private distanceXToNextWiringSpace(wiringIndex: number) {
+    let previousWiringsXSpace = 0;
+    for (let wiringNumber = 0; wiringNumber < wiringIndex; wiringNumber++) {
+      previousWiringsXSpace += this.wiringsGroup[wiringNumber].width ?? 0;
+    }
+    return this.core.thickness + this.bobbin.distance_to_core_floor + this.bobbin.floor_thickness + previousWiringsXSpace;
+  }
+
   drawWiring() {
-    this.wirings.forEach((wiring) => {
-      const wiringLayersGroups: fabric.Object[] = [];
-      const totalWiringPerLayer = Math.round(wiring.number_turns / wiring.number_layers);
-      console.log('REMAINING WIRINGS', totalWiringPerLayer, wiring.number_turns / wiring.number_layers);
+    this.wirings.forEach((wiring, wiringIndex) => {
+      const totalTurnsPerLayer = Math.floor(wiring.number_turns / wiring.number_layers);
+      let totalRemainingTurns = Math.floor(wiring.number_turns % wiring.number_layers);
       const wiringRadius = wiring.total_height / 2;
       const wiringLayers: fabric.Object[][] = [];
+      console.log(`TOTAL REMAINING TURNS PER LAYER ${totalRemainingTurns} AND TOTAL TURNS PER LAYER ${totalTurnsPerLayer}`);
 
       let totalTurns = 0;
       for (let layer = 0; layer < wiring.number_layers; layer++) {
         wiringLayers[layer] = [];
-        for (let turn = 0; turn < totalWiringPerLayer && totalTurns < wiring.number_turns; turn++) {
-          console.log(`TOTAL TURNS ${totalTurns} of wiring`);
+        const remainingTurn = (totalRemainingTurns > 0 ? 1 : 0);
+        const turnsPerLayer = totalTurnsPerLayer + remainingTurn;
+        totalRemainingTurns = totalRemainingTurns - remainingTurn;
+        for (let turn = 0; turn < turnsPerLayer && totalTurns < wiring.number_turns; turn++) {
           totalTurns++;
           const circle = new fabric.Circle({
             radius: wiringRadius,
@@ -157,22 +183,13 @@ export default class MagneticDrawer {
         }
       }
 
-      const totalWiringsHeight = wiring.total_height * totalWiringPerLayer;
-      for (let layer = 0; layer < wiringLayers.length; layer++) {
-        const layerWiringHeight = wiring.total_height * wiringLayers[layer].length;
-        const centerY = totalWiringsHeight / 2 - layerWiringHeight / 2;
-        wiringLayersGroups.push(
-          new fabric.Group(wiringLayers[layer], {
-            left: wiring.total_height * layer,
-            top: centerY,
-          })
-        );
-      }
+      const totalWiringsHeight = wiring.total_height * (totalTurnsPerLayer > 0 ? totalTurnsPerLayer : 1);
+      const wiringLayersGroup = this.centeredWiringGroup(wiringLayers, wiring.total_height, totalWiringsHeight);
 
       const centerY = this.core.height / 2 - totalWiringsHeight / 2;
-      const distanceXToWhiteSpace = this.core.thickness + this.bobbin.distance_to_core_floor + this.bobbin.floor_thickness;
+      const distanceXToWhiteSpace = this.distanceXToNextWiringSpace(wiringIndex);
       this.wiringsGroup.push(
-        new fabric.Group(wiringLayersGroups, {
+        new fabric.Group(wiringLayersGroup, {
           left: distanceXToWhiteSpace,
           top: centerY,
           hasControls: false,
