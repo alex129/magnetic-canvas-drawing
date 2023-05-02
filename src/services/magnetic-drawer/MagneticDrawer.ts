@@ -5,8 +5,8 @@ import Gap from '../../domain/Gap';
 import Wiring from '../../domain/Wiring';
 
 export default class MagneticDrawer {
-  cores: fabric.Rect[];
-  bobbins: fabric.Rect[];
+  rectanglesOfCore: fabric.Rect[];
+  rectanglesOfBobbin: fabric.Rect[];
   gaps: Gap[];
   wirings: Wiring[];
   wiringsGroup: fabric.Group[];
@@ -20,24 +20,11 @@ export default class MagneticDrawer {
     this.bobbin = bobbin;
     this.gaps = gaps;
     this.wirings = wirings;
-    this.cores = [];
-    this.bobbins = [];
+    this.rectanglesOfCore = [];
+    this.rectanglesOfBobbin = [];
     this.wiringsGroup = [];
 
-    this.canvas.setDimensions({
-      width: 200,
-      height: 300,
-    });
-
     this.clearCanvas();
-  }
-
-  canvasHeight() {
-    return this.canvas.height ?? 0;
-  }
-
-  coreWidth() {
-    return this.cores[1].width ?? 0;
   }
 
   drawCore() {
@@ -47,9 +34,9 @@ export default class MagneticDrawer {
     });
 
     for (let rect = 0; rect < 3; rect++) {
-      let width = rect % 2 === 0 ? this.canvas.width : this.core.getThickness();
-      let height = rect % 2 === 0 ? this.core.getThickness() : this.canvasHeight();
-      let positionY = rect === 2 ? this.canvasHeight() - height : 0;
+      let width = rect % 2 === 0 ? this.canvas.getWidth() : this.core.getThickness();
+      let height = rect % 2 === 0 ? this.core.getThickness() : this.canvas.getHeight();
+      let positionY = rect === 2 ? this.canvas.getHeight() - height : 0;
 
       let coreRect = new fabric.Rect({
         width: width,
@@ -62,10 +49,10 @@ export default class MagneticDrawer {
         strokeWidth: 0,
       });
 
-      this.cores.push(coreRect);
+      this.rectanglesOfCore.push(coreRect);
     }
 
-    const coreGroup = new fabric.Group(this.cores, {
+    const coreGroup = new fabric.Group(this.rectanglesOfCore, {
       left: 1,
       top: 0,
       hasControls: false,
@@ -78,7 +65,7 @@ export default class MagneticDrawer {
 
   drawGap() {
     const numberGaps = this.gaps.length;
-    const gapRects: fabric.Rect[] = [];
+    const gapRectangles: fabric.Rect[] = [];
     this.gaps.forEach((gap, index) => {
       const positionAvailableByNumberGaps = (this.core.height / numberGaps) * (index + 1);
       const positionY = this.core.height / 2 + positionAvailableByNumberGaps;
@@ -93,10 +80,10 @@ export default class MagneticDrawer {
         selectable: false,
       });
 
-      gapRects.push(gapRect);
+      gapRectangles.push(gapRect);
     });
 
-    const gapGroup = new fabric.Group(gapRects, {
+    const gapsGroup = new fabric.Group(gapRectangles, {
       left: 0,
       top: 0,
       height: this.core.height,
@@ -105,7 +92,7 @@ export default class MagneticDrawer {
       selectable: false,
     });
 
-    this.addToCanvas(gapGroup);
+    this.addToCanvas(gapsGroup);
   }
 
   drawBobbin() {
@@ -130,18 +117,17 @@ export default class MagneticDrawer {
         strokeWidth: 0,
       });
 
-      this.bobbins.push(bobbinRect);
+      this.rectanglesOfBobbin.push(bobbinRect);
     }
 
     let positionX = this.core.thickness + this.bobbin.distance_to_core_floor;
     let positionY = this.core.thickness + this.bobbin.distance_to_core_wall;
-    const bobbinGroup = new fabric.Group(this.bobbins, {
+    const bobbinGroup = new fabric.Group(this.rectanglesOfBobbin, {
       left: positionX,
       top: positionY,
       strokeWidth: 0,
       hasControls: false,
       selectable: false,
-      hasBorders: false,
     });
 
     this.addToCanvas(bobbinGroup);
@@ -150,16 +136,17 @@ export default class MagneticDrawer {
   drawWiring() {
     this.wirings.forEach((wiring) => {
       const wiringLayersGroups: fabric.Object[] = [];
-      const remainingWirings = wiring.number_turns % wiring.number_layers;
-      const totalWiringPerLayer = Math.floor(wiring.number_turns / wiring.number_layers);
-      const wiringHeight = wiring.total_height * (totalWiringPerLayer + remainingWirings);
-      console.log('REMAINING WIRINGS', remainingWirings, totalWiringPerLayer, wiring.number_turns / wiring.number_layers);
+      const totalWiringPerLayer = Math.round(wiring.number_turns / wiring.number_layers);
+      console.log('REMAINING WIRINGS', totalWiringPerLayer, wiring.number_turns / wiring.number_layers);
       const wiringRadius = wiring.total_height / 2;
       const wiringLayers: fabric.Object[][] = [];
+
+      let totalTurns = 0;
       for (let layer = 0; layer < wiring.number_layers; layer++) {
         wiringLayers[layer] = [];
-        const numberTurnsInLayer = layer === 0 ? totalWiringPerLayer + remainingWirings : totalWiringPerLayer;
-        for (let turn = 0; turn < numberTurnsInLayer; turn++) {
+        for (let turn = 0; turn < totalWiringPerLayer && totalTurns < wiring.number_turns; turn++) {
+          console.log(`TOTAL TURNS ${totalTurns} of wiring`);
+          totalTurns++;
           const circle = new fabric.Circle({
             radius: wiringRadius,
             fill: '#33E7FF',
@@ -167,23 +154,22 @@ export default class MagneticDrawer {
             left: 0,
           });
           wiringLayers[layer].push(circle);
-          // wiringLayersGroups.push(circle);
         }
       }
 
+      const totalWiringsHeight = wiring.total_height * totalWiringPerLayer;
       for (let layer = 0; layer < wiringLayers.length; layer++) {
-        const layerWiringHeight = wiring.total_height * wiringLayers[layer].length
-        const centerY = wiringHeight / 2 - layerWiringHeight / 2;
-        console.log('CENTER WIRING GROUP', centerY);
+        const layerWiringHeight = wiring.total_height * wiringLayers[layer].length;
+        const centerY = totalWiringsHeight / 2 - layerWiringHeight / 2;
         wiringLayersGroups.push(
           new fabric.Group(wiringLayers[layer], {
             left: wiring.total_height * layer,
-            top: wiringLayers[layer].length === totalWiringPerLayer ? centerY : 0,
+            top: centerY,
           })
         );
       }
 
-      const centerY = this.core.height / 2 - wiringHeight / 2;
+      const centerY = this.core.height / 2 - totalWiringsHeight / 2;
       const distanceXToWhiteSpace = this.core.thickness + this.bobbin.distance_to_core_floor + this.bobbin.floor_thickness;
       this.wiringsGroup.push(
         new fabric.Group(wiringLayersGroups, {
