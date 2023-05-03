@@ -29,6 +29,7 @@ export default class MagneticDrawer {
 
     this.clearCanvas();
 
+    this.canvas.selection = false;
     this.canvas.on('object:modified', (e) => this.objectModifiedHandler(e));
   }
 
