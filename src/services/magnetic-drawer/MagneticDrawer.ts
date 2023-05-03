@@ -237,15 +237,6 @@ export default class MagneticDrawer {
     this.canvas.clear().renderAll();
   }
 
-  private clearWirings() {
-    this.wiringsGroup.forEach((wiringGroup) => {
-      this.canvas.remove(wiringGroup);
-    });
-    this.wiringsGroup = [];
-    this.canvas.renderAll();
-    this.drawWiring();
-  }
-
   private objectModifiedHandler(e: fabric.IEvent) {
     const wireMoved = this.wiringsGroup.find((wire) => wire === e.target);
     const modifiedWireIndex = this.wiringsGroup.findIndex((wire) => wire === wireMoved);
@@ -265,10 +256,7 @@ export default class MagneticDrawer {
           wire.saveState();
 
           this.wiringsGroupCoordinates[modifiedWireIndex] = newCoordinatesToModifiedWire;
-          this.wiringsGroupCoordinates[wireIndex] = {
-            top: previousModifiedObjectCoordinates.top,
-            left: previousModifiedObjectCoordinates.left,
-          };
+          this.wiringsGroupCoordinates[wireIndex] = previousModifiedObjectCoordinates
 
           this.removeFromCanvas([wireMoved, wire]);
           this.addToCanvas([wireMoved, wire]);
