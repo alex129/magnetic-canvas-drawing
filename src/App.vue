@@ -29,7 +29,6 @@ let magneticDrawer: MagneticDrawer;
 let canvas: fabric.Canvas;
 
 const drawMagnetic = () => {
-  console.log(state.value.core);
   magneticDrawer = new MagneticDrawer(canvas, state.value.core, state.value.coilFormer, state.value.gaps, state.value.wirings);
   magneticDrawer.drawCore();
   magneticDrawer.drawGap();
@@ -97,7 +96,7 @@ onMounted(() => {
         <h3 class="text-center font-bold">WIRING</h3>
 
         <div class="grid place-content-center" v-for="(wiring, index) in state.wirings" :key="index">
-          <h3 class="text-center mt-5" :class="[`text-${WiringOptions[index].color_code}`]">{{ WiringOptions[index].title }}</h3>
+          <h3 class="text-center mt-5" :class="`${WiringOptions[index].color_code}`">{{ WiringOptions[index].title }}</h3>
 
           <div class="mt-5 flex flex-wrap gap-5">
             <Input type="number" label="Number Turns" v-model="wiring.number_turns" @change="drawMagnetic" />
@@ -111,3 +110,12 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.wiring-primary {
+  color: #33E7FF;
+}
+.wiring-secondary {
+  color: #ebac23;
+}
+</style>

@@ -11,10 +11,10 @@ export default class MagneticDrawer {
   gaps: Gap[];
   wirings: Wiring[];
   wiringsGroup: fabric.Object[];
+  wiringsGroupCoordinates: Coordinates[];
   canvas: fabric.Canvas;
   core: Core;
   bobbin: CoilFormer;
-  wiringGroupPreviousCoordinates: any;
 
   constructor(canvas: fabric.Canvas, core: Core, bobbin: CoilFormer, gaps: Gap[], wirings: Wiring[]) {
     this.canvas = canvas;
@@ -25,11 +25,11 @@ export default class MagneticDrawer {
     this.rectanglesOfCore = [];
     this.rectanglesOfBobbin = [];
     this.wiringsGroup = [];
+    this.wiringsGroupCoordinates = [];
 
     this.clearCanvas();
 
     this.canvas.on('object:modified', (e) => this.objectModifiedHandler(e));
-    this.canvas.on('object:moving', (e) => this.objectMovingHandler(e));
   }
 
   drawCore() {
@@ -155,11 +155,13 @@ export default class MagneticDrawer {
   }
 
   private distanceXToNextWiringSpace(wiringIndex: number) {
+    const posibilityStroke = 1
     let previousWiringsXSpace = 0;
     for (let wiringNumber = 0; wiringNumber < wiringIndex; wiringNumber++) {
       previousWiringsXSpace += this.wiringsGroup[wiringNumber].width ?? 0;
+      previousWiringsXSpace += posibilityStroke
     }
-    return this.core.thickness + this.bobbin.distance_to_core_floor + this.bobbin.floor_thickness + previousWiringsXSpace;
+    return this.core.thickness + this.bobbin.distance_to_core_floor + this.bobbin.floor_thickness + previousWiringsXSpace + posibilityStroke;
   }
 
   drawWiring() {
@@ -183,6 +185,7 @@ export default class MagneticDrawer {
             fill: WiringOptions[wiringIndex].color,
             top: wiring.total_height * turn,
             left: 0,
+            strokeWidth: 0,
           });
           wiringLayers[layer].push(circle);
         }
@@ -193,13 +196,17 @@ export default class MagneticDrawer {
 
       const centerY = this.core.height / 2 - totalWiringsHeight / 2;
       const distanceXToWhiteSpace = this.distanceXToNextWiringSpace(wiringIndex);
-      const wiringGroup = new fabric.Group(wiringLayersGroup, {
+      const wiringCoordinates = {
         left: distanceXToWhiteSpace,
         top: centerY,
+      };
+      const wiringGroup = new fabric.Group(wiringLayersGroup, {
+        ...wiringCoordinates,
         hasControls: false,
       });
 
       this.wiringsGroup.push(wiringGroup);
+      this.wiringsGroupCoordinates.push(wiringCoordinates);
     });
 
     this.wiringsGroup.forEach((group) => {
@@ -207,11 +214,21 @@ export default class MagneticDrawer {
     });
   }
 
-  private addToCanvas(element: fabric.Object) {
-    this.canvas.add(element);
-    this.canvas.getObjects().forEach((obj) => {
-      obj.set('strokeWidth', 0);
-    });
+  private addToCanvas(element: fabric.Object | fabric.Object[]) {
+    if (Array.isArray(element)) {
+      element.forEach((e) => this.canvas.add(e));
+    } else {
+      this.canvas.add(element);
+    }
+    this.canvas.renderAll();
+  }
+
+  private removeFromCanvas(element: fabric.Object | fabric.Object[]) {
+    if (Array.isArray(element)) {
+      element.forEach((e) => this.canvas.remove(e));
+    } else {
+      this.canvas.add(element);
+    }
     this.canvas.renderAll();
   }
 
@@ -229,38 +246,46 @@ export default class MagneticDrawer {
   }
 
   private objectModifiedHandler(e: fabric.IEvent) {
-    const modifiedObject = e.target as fabric.Object;
-    console.log(e.target);
-    if (modifiedObject) {
-      let containerObject: fabric.Object | null = null;
-      this.wiringsGroup
-        .filter((wiringGroup) => wiringGroup !== modifiedObject)
-        .forEach((wiringGroup) => {
-          if (wiringGroup.containsPoint(modifiedObject.getCenterPoint())) {
-            // const containerIndex = this.canvas.getObjects().indexOf(containerObject);
-            // const movingIndex = this.canvas.getObjects().indexOf(movingObject);
-            // this.canvas.moveTo(movingObject, containerIndex);
-            // this.canvas.moveTo(containerObject, movingIndex);
-            console.log('Contains point');
-            modifiedObject.set({
-              top: wiringGroup.top,
-              left: wiringGroup.left,
-            });
-          }
+    const wireMoved = this.wiringsGroup.find((wire) => wire === e.target);
+    const modifiedWireIndex = this.wiringsGroup.findIndex((wire) => wire === wireMoved);
+    if (wireMoved && modifiedWireIndex >= 0) {
+      let dropedOnOtherWiringPosition: boolean = false;
+      const previousModifiedObjectCoordinates = this.wiringsGroupCoordinates[modifiedWireIndex];
+      this.wiringsGroup.forEach((wire, wireIndex) => {
+        if (modifiedWireIndex !== wireIndex && wire.containsPoint(wireMoved.getCenterPoint()) && !dropedOnOtherWiringPosition) {
+          console.log(this.wiringsGroupCoordinates[modifiedWireIndex], this.wiringsGroupCoordinates[wireIndex], modifiedWireIndex, wireIndex);
+          const newCoordinatesToModifiedWire = {
+            top: previousModifiedObjectCoordinates.top,
+            left: wire.left,
+          };
+          wireMoved.set(newCoordinatesToModifiedWire);
+          wire.set(previousModifiedObjectCoordinates);
+          wireMoved.saveState();
+          wire.saveState();
+
+          this.wiringsGroupCoordinates[modifiedWireIndex] = newCoordinatesToModifiedWire;
+          this.wiringsGroupCoordinates[wireIndex] = {
+            top: previousModifiedObjectCoordinates.top,
+            left: previousModifiedObjectCoordinates.left,
+          };
+
+          this.removeFromCanvas([wireMoved, wire]);
+          this.addToCanvas([wireMoved, wire]);
+
+          dropedOnOtherWiringPosition = true;
+        }
+      });
+
+      if (!dropedOnOtherWiringPosition) {
+        wireMoved.set({
+          ...this.wiringsGroupCoordinates[modifiedWireIndex],
         });
-
-      if (!containerObject) {
-        //this.clearWirings();
-        modifiedObject.set(this.wiringGroupPreviousCoordinates);
-        modifiedObject.saveState()
+        this.removeFromCanvas(wireMoved);
+        this.addToCanvas(wireMoved);
       }
-    }
-  }
 
-  private objectMovingHandler(e: fabric.IEvent) {
-    const movingObject = e.target as fabric.Object & { isMoving: boolean };
-    if (movingObject && !movingObject.isMoving) {
-      this.wiringGroupPreviousCoordinates = { top: movingObject.top, left: movingObject.left };
+      console.log(this.wiringsGroupCoordinates[0].left);
+      console.log(this.wiringsGroupCoordinates[1].left);
     }
   }
 }
