@@ -156,19 +156,19 @@ export default class MagneticDrawer {
   }
 
   private distanceXToNextWiringSpace(wiringIndex: number) {
-    const posibilityStroke = 1
+    const posibilityStroke = 1;
     let previousWiringsXSpace = 0;
     for (let wiringNumber = 0; wiringNumber < wiringIndex; wiringNumber++) {
       previousWiringsXSpace += this.wiringsGroup[wiringNumber].width ?? 0;
-      previousWiringsXSpace += posibilityStroke
+      previousWiringsXSpace += posibilityStroke;
     }
     return this.core.thickness + this.bobbin.distance_to_core_floor + this.bobbin.floor_thickness + previousWiringsXSpace + posibilityStroke;
   }
 
   drawWiring() {
     this.wirings.forEach((wiring, wiringIndex) => {
-      const totalTurnsPerLayer = Math.floor(wiring.number_turns / wiring.number_layers);
-      let totalRemainingTurns = Math.floor(wiring.number_turns % wiring.number_layers);
+      const totalTurnsPerLayer = Math.floor(wiring.totalTurns() / wiring.number_layers);
+      let totalRemainingTurns = Math.floor(wiring.totalTurns() % wiring.number_layers);
       const wiringRadius = wiring.total_height / 2;
       const wiringLayers: fabric.Object[][] = [];
       console.log(`TOTAL REMAINING TURNS PER LAYER ${totalRemainingTurns} AND TOTAL TURNS PER LAYER ${totalTurnsPerLayer}`);
@@ -176,10 +176,10 @@ export default class MagneticDrawer {
       let totalTurns = 0;
       for (let layer = 0; layer < wiring.number_layers; layer++) {
         wiringLayers[layer] = [];
-        const remainingTurn = totalRemainingTurns > 0 ? 1 : 0;
+        const remainingTurn = totalRemainingTurns > 0 ? 1 * wiring.number_parallels : 0;
         const turnsPerLayer = totalTurnsPerLayer + remainingTurn;
         totalRemainingTurns = totalRemainingTurns - remainingTurn;
-        for (let turn = 0; turn < turnsPerLayer && totalTurns < wiring.number_turns; turn++) {
+        for (let turn = 0; turn < turnsPerLayer && totalTurns < wiring.totalTurns(); turn++) {
           totalTurns++;
           const circle = new fabric.Circle({
             radius: wiringRadius,
@@ -195,16 +195,17 @@ export default class MagneticDrawer {
       const totalWiringsHeight = wiring.total_height * (totalTurnsPerLayer > 0 ? totalTurnsPerLayer : 1);
       const wiringLayersGroup = this.centeredWiringGroup(wiringLayers, wiring.total_height, totalWiringsHeight);
 
-      const centerY = this.core.height / 2 - totalWiringsHeight / 2;
       const distanceXToWhiteSpace = this.distanceXToNextWiringSpace(wiringIndex);
+      const wiringGroup = new fabric.Group(wiringLayersGroup, {
+        hasControls: false,
+      });
+      const wiringGroupHeight = wiringGroup.height ?? 0;
+      const centerY = this.core.height / 2 - wiringGroupHeight / 2;
       const wiringCoordinates = {
         left: distanceXToWhiteSpace,
         top: centerY,
       };
-      const wiringGroup = new fabric.Group(wiringLayersGroup, {
-        ...wiringCoordinates,
-        hasControls: false,
-      });
+      wiringGroup.set(wiringCoordinates);
 
       this.wiringsGroup.push(wiringGroup);
       this.wiringsGroupCoordinates.push(wiringCoordinates);
@@ -256,7 +257,7 @@ export default class MagneticDrawer {
           wire.saveState();
 
           this.wiringsGroupCoordinates[modifiedWireIndex] = newCoordinatesToModifiedWire;
-          this.wiringsGroupCoordinates[wireIndex] = previousModifiedObjectCoordinates
+          this.wiringsGroupCoordinates[wireIndex] = previousModifiedObjectCoordinates;
 
           this.removeFromCanvas([wireMoved, wire]);
           this.addToCanvas([wireMoved, wire]);
