@@ -67,6 +67,15 @@ onMounted(() => {
     <div class="grid space-y-5 bg-white dark:bg-slate-800 rounded-lg px-6 py-8 ring-1 ring-slate-900/5 shadow-sm">
       <div class="grid place-content-center gap-10">
         <h1 class="text-center text-blue-900 font-bold">CORE DRAWING</h1>
+
+        <div class="grid place-content-center text-sm">
+          <span class="text-center font-bold">WIRING ARRAGEMENT</span>
+
+          <div class="grid place" v-for="index in state.wiringArragement" :key="index">
+            <span class="text-center mt-5" :class="`${WiringOptions[index].color_code}`">{{ index + 1 }} {{ WiringOptions[index].title }}</span>
+          </div>
+        </div>
+
         <canvas id="draw"></canvas>
       </div>
       <div class="grid place-content-center">
@@ -112,14 +121,6 @@ onMounted(() => {
             <Input type="number" label="Width" v-model="wiring.total_width" @change="drawMagnetic" />
             <Input type="number" label="Height" v-model="wiring.total_height" @change="drawMagnetic" />
           </div>
-        </div>
-      </div>
-
-      <div class="grid place-content-center">
-        <h3 class="text-center font-bold">WIRING ARRAGEMENT</h3>
-
-        <div class="grid place-content-center" v-for="index in state.wiringArragement" :key="index">
-          <h3 class="text-center mt-5" :class="`${WiringOptions[index].color_code}`">{{ index + 1 }} {{ WiringOptions[index].title }}</h3>
         </div>
       </div>
     </div>
