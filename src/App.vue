@@ -16,6 +16,7 @@ interface State {
   gapLength: number;
   numberGaps: number;
   wirings: Wiring[];
+  wiringArragement: number[];
 }
 const state = ref<State>({
   core: new Core(),
@@ -24,12 +25,13 @@ const state = ref<State>({
   wirings: [new Wiring(), new Wiring()],
   gapLength: 10,
   numberGaps: 1,
+  wiringArragement: [],
 });
 let magneticDrawer: MagneticDrawer;
 let canvas: fabric.Canvas;
 
 const drawMagnetic = () => {
-  magneticDrawer = new MagneticDrawer(canvas, state.value.core, state.value.coilFormer, state.value.gaps, state.value.wirings);
+  magneticDrawer = new MagneticDrawer(canvas, state.value.core, state.value.coilFormer, state.value.gaps, state.value.wirings, state.value.wiringArragement);
   magneticDrawer.drawCore();
   magneticDrawer.drawGap();
   magneticDrawer.drawBobbin();
@@ -48,8 +50,13 @@ const refreshNumberGaps = () => {
   drawMagnetic();
 };
 
+const setUpWiringArragement = () => {
+  state.value.wiringArragement = state.value.wirings.map((_wire, wireIndex) => wireIndex);
+};
+
 onMounted(() => {
   canvas = new fabric.Canvas('draw');
+  setUpWiringArragement();
   refreshNumberGaps();
   drawMagnetic();
 });
@@ -107,13 +114,21 @@ onMounted(() => {
           </div>
         </div>
       </div>
+
+      <div class="grid place-content-center">
+        <h3 class="text-center font-bold">WIRING ARRAGEMENT</h3>
+
+        <div class="grid place-content-center" v-for="index in state.wiringArragement" :key="index">
+          <h3 class="text-center mt-5" :class="`${WiringOptions[index].color_code}`">{{ index + 1 }} {{ WiringOptions[index].title }}</h3>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .wiring-primary {
-  color: #33E7FF;
+  color: #33e7ff;
 }
 .wiring-secondary {
   color: #ebac23;
