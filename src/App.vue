@@ -18,6 +18,7 @@ interface State {
   wirings: Wiring[];
   wiringArragement: number[];
 }
+
 const state = ref<State>({
   core: new Core(),
   coilFormer: new CoilFormer(),

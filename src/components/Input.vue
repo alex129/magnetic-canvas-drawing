@@ -1,23 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
 interface Props {
   label: string;
   type: 'text' | 'number';
-  modelValue: string | number;
 }
 
-const props = defineProps<Props>();
-const emits = defineEmits(['update:modelValue']);
-
-const value = computed({
-  get() {
-    return props.modelValue ?? 0;
-  },
-  set(value) {
-    emits('update:modelValue', value);
-  },
-});
+defineProps<Props>();
+const modelValue = defineModel()
 </script>
 <template>
   <div>
@@ -26,7 +14,7 @@ const value = computed({
       :type="type"
       id="small-input"
       class="block w-full p-2 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 sm:text-xs focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-      v-model="value"
+      v-model="modelValue"
       min="0"
     />
   </div>
