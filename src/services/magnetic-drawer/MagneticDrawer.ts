@@ -258,21 +258,6 @@ export default class MagneticDrawer {
 
       this.wiringsGroup.forEach((wire, wireIndex) => {
         if (movedWireIndex !== wireIndex && wire.containsPoint(wireMoved.getCenterPoint()) && !dropedOnOtherWiringPosition) {
-          console.log(this.wiringsGroupCoordinates[movedWireIndex], this.wiringsGroupCoordinates[wireIndex], movedWireIndex, wireIndex);
-          // const { left: newXPositionToModifiedWire } = wire;
-          // const { left: previousXPositionOfModifiedWire, top: previousYPositionOfModifiedWire } = this.wiringsGroupCoordinates[modifiedWireIndex];
-
-          // wireMoved.set({
-          //   top: previousYPositionOfModifiedWire,
-          //   left: newXPositionToModifiedWire,
-          // });
-          // wire.set({
-          //   left: previousXPositionOfModifiedWire,
-          // });
-
-          // this.wiringsGroupCoordinates[modifiedWireIndex].left = newXPositionToModifiedWire;
-          // this.wiringsGroupCoordinates[wireIndex].left = previousXPositionOfModifiedWire;
-
           const indexFrom = this.wiringArragement.indexOf(movedWireIndex);
           const indexTo = this.wiringArragement.indexOf(wireIndex);
           this.wiringArragement[indexFrom] = wireIndex;
