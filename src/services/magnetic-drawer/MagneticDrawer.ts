@@ -71,6 +71,55 @@ export default class MagneticDrawer {
     this.addToCanvas(coreGroup);
   }
 
+  drawToroid() {
+    // Variables
+    const toroidThickness = 20;
+    const numVueltas = 8;
+    const radioInterno = 100;
+    const radioExterno = 50;
+    const colorCirculo = 'gray';
+    const colorCable = '#B87333';
+
+    let toroide = new fabric.Circle({
+      left: this.canvas.getWidth() / 2,
+      top: this.canvas.getHeight() / 2,
+      radius: radioExterno,
+      fill: colorCirculo,
+      originX: 'center',
+      originY: 'center',
+    });
+    this.canvas.add(toroide);
+
+    
+    let circleInterior = new fabric.Circle({
+      left: this.canvas.getWidth() / 2,
+      top: this.canvas.getHeight() / 2,
+      radius: radioExterno - toroidThickness,
+      fill: '#ffffff',
+      originX: 'center',
+      originY: 'center',
+    });
+    this.canvas.add(circleInterior);
+
+    // Crear los cables
+    for (let i = 0; i < numVueltas; i++) {
+      let angulo = (i / numVueltas) * 2 * Math.PI;
+      let x1 = this.canvas.getWidth() / 2 + Math.cos(angulo) * radioInterno;
+      let y1 = this.canvas.getHeight() / 2 + Math.sin(angulo) * radioInterno;
+      let x2 = this.canvas.getWidth() / 2 + Math.cos(angulo) * radioExterno;
+      let y2 = this.canvas.getHeight() / 2 + Math.sin(angulo) * radioExterno;
+
+      let cable = new fabric.Line([x1, y1, x2, y2], {
+        stroke: colorCable,
+        strokeWidth: 2,
+      });
+      this.canvas.add(cable);
+    }
+
+    // Renderizar el lienzo
+    this.canvas.renderAll();
+  }
+
   drawGap() {
     const numberGaps = this.gaps.length;
     const gapRectangles: fabric.Rect[] = [];
@@ -267,7 +316,7 @@ export default class MagneticDrawer {
         }
       });
 
-      console.log(this.wiringArragement)
+      console.log(this.wiringArragement);
       this.clearWiring();
       this.drawWiring();
 

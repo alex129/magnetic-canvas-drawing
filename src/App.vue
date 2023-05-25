@@ -33,10 +33,11 @@ let canvas: fabric.Canvas;
 
 const drawMagnetic = () => {
   magneticDrawer = new MagneticDrawer(canvas, state.value.core, state.value.coilFormer, state.value.gaps, state.value.wirings, state.value.wiringArragement);
-  magneticDrawer.drawCore();
-  magneticDrawer.drawGap();
-  magneticDrawer.drawBobbin();
-  magneticDrawer.drawWiring();
+  // magneticDrawer.drawCore();
+  // magneticDrawer.drawGap();
+  // magneticDrawer.drawBobbin();
+  // magneticDrawer.drawWiring();
+  magneticDrawer.drawToroid();
 };
 
 const refreshNumberGaps = () => {
