@@ -5,7 +5,7 @@ interface Props {
 }
 
 defineProps<Props>();
-const modelValue = defineModel()
+const modelValue = defineModel();
 </script>
 <template>
   <div>

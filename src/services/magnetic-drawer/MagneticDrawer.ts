@@ -141,32 +141,6 @@ export default class MagneticDrawer {
     this.addToCanvas(bobbinGroup);
   }
 
-  private centeredWiringGroup(wiringLayers: fabric.Object[][], wiringHeight: number, totalWiringsHeight: number): fabric.Group[] {
-    const wiringLayersGroups: fabric.Group[] = [];
-    for (let layer = 0; layer < wiringLayers.length; layer++) {
-      const layerWiringHeight = wiringHeight * wiringLayers[layer].length;
-      const centerY = totalWiringsHeight / 2 - layerWiringHeight / 2;
-      wiringLayersGroups.push(
-        new fabric.Group(wiringLayers[layer], {
-          left: wiringHeight * layer,
-          top: centerY,
-        })
-      );
-    }
-
-    return wiringLayersGroups;
-  }
-
-  private distanceXToNextWiringSpace(wiringIndex: number) {
-    const posibilityStroke = 1;
-    let previousWiringsXSpace = 0;
-    for (let wiringNumber = 0; wiringNumber < wiringIndex; wiringNumber++) {
-      previousWiringsXSpace += this.wiringsGroup[wiringNumber].width ?? 0;
-      previousWiringsXSpace += posibilityStroke;
-    }
-    return this.core.thickness + this.bobbin.distance_to_core_floor + this.bobbin.floor_thickness + previousWiringsXSpace + posibilityStroke;
-  }
-
   drawWiring() {
     this.wiringArragement.forEach((wiringIndex, wireNumber) => {
       const wiring = this.wirings[wiringIndex];
@@ -219,6 +193,32 @@ export default class MagneticDrawer {
     });
   }
 
+  private centeredWiringGroup(wiringLayers: fabric.Object[][], wiringHeight: number, totalWiringsHeight: number): fabric.Group[] {
+    const wiringLayersGroups: fabric.Group[] = [];
+    for (let layer = 0; layer < wiringLayers.length; layer++) {
+      const layerWiringHeight = wiringHeight * wiringLayers[layer].length;
+      const centerY = totalWiringsHeight / 2 - layerWiringHeight / 2;
+      wiringLayersGroups.push(
+        new fabric.Group(wiringLayers[layer], {
+          left: wiringHeight * layer,
+          top: centerY,
+        })
+      );
+    }
+
+    return wiringLayersGroups;
+  }
+
+  private distanceXToNextWiringSpace(wiringIndex: number) {
+    const posibilityStroke = 1;
+    let previousWiringsXSpace = 0;
+    for (let wiringNumber = 0; wiringNumber < wiringIndex; wiringNumber++) {
+      previousWiringsXSpace += this.wiringsGroup[wiringNumber].width ?? 0;
+      previousWiringsXSpace += posibilityStroke;
+    }
+    return this.core.thickness + this.bobbin.distance_to_core_floor + this.bobbin.floor_thickness + previousWiringsXSpace + posibilityStroke;
+  }
+
   private addToCanvas(element: fabric.Object | fabric.Object[]) {
     if (Array.isArray(element)) {
       element.forEach((e) => this.canvas.add(e));
@@ -267,7 +267,7 @@ export default class MagneticDrawer {
         }
       });
 
-      console.log(this.wiringArragement)
+      console.log(this.wiringArragement);
       this.clearWiring();
       this.drawWiring();
 
