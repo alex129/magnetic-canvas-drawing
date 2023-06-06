@@ -10,16 +10,16 @@ export const enum InsulationType {
     PLASTIC = 'plastic',
 }
 export default class RoundWire implements Wire {
-    number_turns = 0;
-    number_layers = 0;
-    number_parallels = 0;
+    number_turns = 10;
+    number_layers = 1;
+    number_parallels = 1;
     wire_standard = WireStandardTypes.INTERNATIONAL;
     conductor_width = 0;
     insulation_type = InsulationType.ENAMEL as string;
     margin_tape = 0;
     grade = 0;
     customized_outer_dimensions = false;
-    total_width = 0;
+    total_width = 20;
 
     getWireType(): WireTypes {
         return WireTypes.ROUND;

@@ -2,14 +2,15 @@ import { fabric } from 'fabric';
 import Core from '../../domain/Core';
 import CoilFormer from '../../domain/CoilFormer';
 import Gap from '../../domain/Gap';
-import Wiring from '../../domain/Wiring';
 import WiringOptions from '../../enum/Wirings';
+import Winding from '../../domain/Winding';
 
 export default class MagneticDrawer {
   rectanglesOfCore: fabric.Rect[];
   rectanglesOfBobbin: fabric.Rect[];
   gaps: Gap[];
-  wirings: Wiring[];
+  //wirings: Wiring[];
+  windings: Winding[];
   wiringsGroup: fabric.Object[];
   wiringsGroupCoordinates: Coordinates[];
   canvas: fabric.Canvas;
@@ -17,12 +18,13 @@ export default class MagneticDrawer {
   bobbin: CoilFormer;
   wiringArragement: number[];
 
-  constructor(canvas: fabric.Canvas, core: Core, bobbin: CoilFormer, gaps: Gap[], wirings: Wiring[], wiringArragement: number[]) {
+  constructor(canvas: fabric.Canvas, core: Core, bobbin: CoilFormer, gaps: Gap[], windings: Winding[], wiringArragement: number[]) {
     this.canvas = canvas;
     this.core = core;
     this.bobbin = bobbin;
     this.gaps = gaps;
-    this.wirings = wirings;
+    //this.wirings = wirings;
+    this.windings = windings;
     this.wiringArragement = wiringArragement;
     this.rectanglesOfCore = [];
     this.rectanglesOfBobbin = [];
@@ -142,50 +144,54 @@ export default class MagneticDrawer {
   }
 
   drawWiring() {
-    this.wiringArragement.forEach((wiringIndex, wireNumber) => {
-      const wiring = this.wirings[wiringIndex];
-      const totalTurnsPerLayer = Math.floor(wiring.totalTurns() / wiring.number_layers);
-      let totalRemainingTurns = Math.floor(wiring.totalTurns() % wiring.number_layers);
-      const wiringRadius = wiring.total_height / 2;
-      const wiringLayers: fabric.Object[][] = [];
-      console.log(`TOTAL REMAINING TURNS PER LAYER ${totalRemainingTurns} AND TOTAL TURNS PER LAYER ${totalTurnsPerLayer}`);
+    this.wiringArragement.forEach((windingIndex, wireNumber) => {
+      const winding = this.windings[windingIndex];
+      if (winding.wire) {
+        const totalTurnsFromParallels = winding.wire.number_turns * winding.wire.number_parallels;
+        const totalHeight = 20; // TODO: CALCUATE IN WIRE
+        const totalTurnsPerLayer = Math.floor(totalTurnsFromParallels / winding.wire.number_layers);
+        let totalRemainingTurns = Math.floor(totalTurnsFromParallels % winding.wire.number_layers);
+        const wiringRadius = totalHeight / 2;
+        const wiringLayers: fabric.Object[][] = [];
+        console.log(`TOTAL REMAINING TURNS PER LAYER ${totalRemainingTurns} AND TOTAL TURNS PER LAYER ${totalTurnsPerLayer}`);
 
-      let totalTurns = 0;
-      for (let layer = 0; layer < wiring.number_layers; layer++) {
-        wiringLayers[layer] = [];
-        const remainingTurn = totalRemainingTurns > 0 ? 1 * wiring.number_parallels : 0;
-        const turnsPerLayer = totalTurnsPerLayer + remainingTurn;
-        totalRemainingTurns = totalRemainingTurns - remainingTurn;
-        for (let turn = 0; turn < turnsPerLayer && totalTurns < wiring.totalTurns(); turn++) {
-          totalTurns++;
-          const circle = new fabric.Circle({
-            radius: wiringRadius,
-            fill: WiringOptions[wiringIndex].color,
-            top: wiring.total_height * turn,
-            left: 0,
-            strokeWidth: 0,
-          });
-          wiringLayers[layer].push(circle);
+        let totalTurns = 0;
+        for (let layer = 0; layer < winding.wire.number_layers; layer++) {
+          wiringLayers[layer] = [];
+          const remainingTurn = totalRemainingTurns > 0 ? 1 * winding.wire.number_parallels : 0;
+          const turnsPerLayer = totalTurnsPerLayer + remainingTurn;
+          totalRemainingTurns = totalRemainingTurns - remainingTurn;
+          for (let turn = 0; turn < turnsPerLayer && totalTurns < totalTurnsFromParallels; turn++) {
+            totalTurns++;
+            const circle = new fabric.Circle({
+              radius: wiringRadius,
+              fill: WiringOptions[windingIndex].color,
+              top: totalHeight * turn,
+              left: 0,
+              strokeWidth: 0,
+            });
+            wiringLayers[layer].push(circle);
+          }
         }
+        
+        const totalWiringsHeight = totalHeight * (totalTurnsPerLayer > 0 ? totalTurnsPerLayer : 1);
+        const wiringLayersGroup = this.centeredWiringGroup(wiringLayers, totalHeight, totalWiringsHeight);
+
+        const distanceXToWhiteSpace = this.distanceXToNextWiringSpace(wireNumber);
+        const wiringGroup = new fabric.Group(wiringLayersGroup, {
+          hasControls: false,
+        });
+        const wiringGroupHeight = wiringGroup.height ?? 0;
+        const centerY = this.core.height / 2 - wiringGroupHeight / 2;
+        const wiringCoordinates = {
+          left: distanceXToWhiteSpace,
+          top: centerY,
+        };
+        wiringGroup.set(wiringCoordinates);
+
+        this.wiringsGroup.push(wiringGroup);
+        this.wiringsGroupCoordinates.push(wiringCoordinates);
       }
-
-      const totalWiringsHeight = wiring.total_height * (totalTurnsPerLayer > 0 ? totalTurnsPerLayer : 1);
-      const wiringLayersGroup = this.centeredWiringGroup(wiringLayers, wiring.total_height, totalWiringsHeight);
-
-      const distanceXToWhiteSpace = this.distanceXToNextWiringSpace(wireNumber);
-      const wiringGroup = new fabric.Group(wiringLayersGroup, {
-        hasControls: false,
-      });
-      const wiringGroupHeight = wiringGroup.height ?? 0;
-      const centerY = this.core.height / 2 - wiringGroupHeight / 2;
-      const wiringCoordinates = {
-        left: distanceXToWhiteSpace,
-        top: centerY,
-      };
-      wiringGroup.set(wiringCoordinates);
-
-      this.wiringsGroup.push(wiringGroup);
-      this.wiringsGroupCoordinates.push(wiringCoordinates);
     });
 
     this.wiringsGroup.forEach((group) => {

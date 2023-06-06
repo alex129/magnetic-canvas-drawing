@@ -6,8 +6,10 @@ import Input from './components/Input.vue';
 import Core from './domain/Core';
 import CoilFormer from './domain/CoilFormer';
 import Gap from './domain/Gap';
-import Wiring from './domain/Wiring';
 import WiringOptions from './enum/Wirings';
+import Winding from './domain/Winding';
+import RoundWire from './domain/wires/RoundWire';
+import RoundStrategy from './components/wires/RoundStrategy.vue';
 
 interface State {
   core: Core;
@@ -15,7 +17,7 @@ interface State {
   gaps: Gap[];
   gapLength: number;
   numberGaps: number;
-  wirings: Wiring[];
+  windings: Winding[];
   wiringArragement: number[];
 }
 
@@ -23,7 +25,7 @@ const state = ref<State>({
   core: new Core(),
   coilFormer: new CoilFormer(),
   gaps: [],
-  wirings: [new Wiring(), new Wiring()],
+  windings: [new Winding(), new Winding()],
   gapLength: 10,
   numberGaps: 1,
   wiringArragement: [],
@@ -32,7 +34,7 @@ let magneticDrawer: MagneticDrawer;
 let canvas: fabric.Canvas;
 
 const drawMagnetic = () => {
-  magneticDrawer = new MagneticDrawer(canvas, state.value.core, state.value.coilFormer, state.value.gaps, state.value.wirings, state.value.wiringArragement);
+  magneticDrawer = new MagneticDrawer(canvas, state.value.core, state.value.coilFormer, state.value.gaps, state.value.windings, state.value.wiringArragement);
   magneticDrawer.drawCore();
   magneticDrawer.drawGap();
   magneticDrawer.drawBobbin();
@@ -52,11 +54,18 @@ const refreshNumberGaps = () => {
 };
 
 const setUpWiringArragement = () => {
-  state.value.wiringArragement = state.value.wirings.map((_wire, wireIndex) => wireIndex);
+  state.value.wiringArragement = state.value.windings.map((_winding, windingIndex) => windingIndex);
+};
+
+const setUpWindings = () => {
+  state.value.windings.forEach((winding) => {
+    winding.wire = new RoundWire();
+  });
 };
 
 onMounted(() => {
   canvas = new fabric.Canvas('draw');
+  setUpWindings();
   setUpWiringArragement();
   refreshNumberGaps();
   drawMagnetic();
@@ -110,17 +119,11 @@ onMounted(() => {
       </div>
 
       <div class="grid place-content-center">
-        <h3 class="text-center font-bold">WIRING</h3>
+        <h3 class="text-center font-bold">WINDING</h3>
 
-        <div class="grid place-content-center" v-for="(wiring, index) in state.wirings" :key="index">
-          <h3 class="text-center mt-5" :class="`${WiringOptions[index].color_code}`">{{ WiringOptions[index].title }}</h3>
-
-          <div class="mt-5 flex flex-wrap gap-5">
-            <Input type="number" label="Number Turns" v-model="wiring.number_turns" @change="drawMagnetic" />
-            <Input type="number" label="Number Layers" v-model="wiring.number_layers" @change="drawMagnetic" />
-            <Input type="number" label="Number Parallels" v-model="wiring.number_parallels" @change="drawMagnetic" />
-            <Input type="number" label="Width" v-model="wiring.total_width" @change="drawMagnetic" />
-            <Input type="number" label="Height" v-model="wiring.total_height" @change="drawMagnetic" />
+        <div v-for="(winding, windingWindex) in state.windings" :key="windingWindex">
+          <div v-if="winding.wire">
+            <RoundStrategy v-if="winding.hasRoundWire()" v-model="winding.wire" :color="WiringOptions[windingWindex].color_code" :title="WiringOptions[windingWindex].title" @change="drawMagnetic"/>
           </div>
         </div>
       </div>
@@ -129,10 +132,4 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.wiring-primary {
-  color: #33e7ff;
-}
-.wiring-secondary {
-  color: #ebac23;
-}
 </style>
