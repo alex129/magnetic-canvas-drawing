@@ -9,4 +9,5 @@ export default interface Wire {
     number_parallels: number;
     wire_standard: WireStandard;
     getWireType(): WireTypes;
+    getDrawShape(): fabric.Object
 }

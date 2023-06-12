@@ -1,17 +1,24 @@
-import WireStandardTypes from "../../enum/WireStandardTypes";
-import WireTypes from "../../enum/WireTypes";
-import Wire from "../Wire";
+import WireStandardTypes from '../../enum/WireStandardTypes';
+import WireTypes from '../../enum/WireTypes';
+import Wire from '../Wire';
+import { fabric } from 'fabric';
 
 export default class FoilWire implements Wire {
-    number_turns = 0;
-    number_layers = 0;
-    number_parallels = 0;
-    wire_standard = WireStandardTypes.INTERNATIONAL;
-    conductor_width = 0;
-    conductor_height = 0;
-    margin_tape = 0;
+  number_turns = 0;
+  number_layers = 0;
+  number_parallels = 0;
+  wire_standard = WireStandardTypes.INTERNATIONAL;
+  conductor_width = 0;
+  conductor_height = 0;
+  margin_tape = 0;
 
-    getWireType(): WireTypes {
-        return WireTypes.FOIL;
-    }
+  getWireType(): WireTypes {
+    return WireTypes.FOIL;
+  }
+
+  getDrawShape(): fabric.Object {
+    const form = new fabric.Circle({});
+
+    return form;
+  }
 }

@@ -1,6 +1,7 @@
 import WireStandardTypes from '../../enum/WireStandardTypes';
 import WireTypes from '../../enum/WireTypes';
 import Wire from '../Wire';
+import { fabric } from 'fabric';
 
 export type Serving = 'unserved' | 'single_served';
 
@@ -24,5 +25,11 @@ export default class LitzWire implements Wire {
 
   getWireType(): WireTypes {
     return WireTypes.LITZ;
+  }
+
+  getDrawShape(): fabric.Object {
+    const form = new fabric.Circle({});
+
+    return form;
   }
 }

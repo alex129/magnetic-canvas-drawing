@@ -151,7 +151,6 @@ export default class MagneticDrawer {
         const totalHeight = 20; // TODO: CALCUATE IN WIRE
         const totalTurnsPerLayer = Math.floor(totalTurnsFromParallels / winding.wire.number_layers);
         let totalRemainingTurns = Math.floor(totalTurnsFromParallels % winding.wire.number_layers);
-        const wiringRadius = totalHeight / 2;
         const wiringLayers: fabric.Object[][] = [];
         console.log(`TOTAL REMAINING TURNS PER LAYER ${totalRemainingTurns} AND TOTAL TURNS PER LAYER ${totalTurnsPerLayer}`);
 
@@ -163,14 +162,14 @@ export default class MagneticDrawer {
           totalRemainingTurns = totalRemainingTurns - remainingTurn;
           for (let turn = 0; turn < turnsPerLayer && totalTurns < totalTurnsFromParallels; turn++) {
             totalTurns++;
-            const circle = new fabric.Circle({
-              radius: wiringRadius,
+            const wireShape = winding.wire.getDrawShape();
+            wireShape.set({              
               fill: WiringOptions[windingIndex].color,
               top: totalHeight * turn,
               left: 0,
               strokeWidth: 0,
-            });
-            wiringLayers[layer].push(circle);
+            })
+            wiringLayers[layer].push(wireShape);
           }
         }
         
