@@ -79,7 +79,7 @@ onMounted(() => {
         <h1 class="text-center text-blue-900 font-bold">CORE DRAWING</h1>
 
         <div class="grid place-content-center text-sm">
-          <span class="text-center font-bold">WIRING ARRAGEMENT</span>
+          <span class="text-center font-bold">WIRING ARRANGEMENT</span>
 
           <div class="grid place" v-for="index in state.wiringArragement" :key="index">
             <span class="text-center mt-5" :class="`${WiringOptions[index].color_code}`">{{ index + 1 }} {{ WiringOptions[index].title }}</span>
